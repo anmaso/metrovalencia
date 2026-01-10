@@ -24,11 +24,19 @@
         .suggestions div { padding: 8px; cursor: pointer; }
         .suggestions div:hover { background-color: #eee; }
         .input-group { position: relative; flex: 1; }
+        .saved-queries { margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #eee; display: none; }
+        .saved-query-item { display: inline-flex; align-items: center; margin-right: 15px; margin-bottom: 5px; background: #fff; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .saved-query-link { cursor: pointer; color: #0066cc; text-decoration: none; margin-right: 8px; }
+        .saved-query-link:hover { text-decoration: underline; }
+        .delete-btn { cursor: pointer; color: #cc0000; font-weight: bold; font-size: 1.2em; line-height: 1; }
+        .delete-btn:hover { color: #ff0000; }
     </style>
 </head>
 <body>
     <h1>Metrovalencia Schedule</h1>
     
+    <div id="saved-queries" class="saved-queries"></div>
+
     <div class="controls">
         <div class="input-group">
             <input type="text" id="origin" placeholder="Origin Station" autocomplete="off">
@@ -110,6 +118,10 @@
 
                 if (data.result && data.result.length > 0 && data.result[0].pasos && data.result[0].pasos.length > 0) {
                     const step = data.result[0].pasos[0];
+                    
+                    // Save successful query
+                    saveQuery(step.origen, step.destino);
+
                     const schedules = step.horarios;
                     
                     let tableHtml = '<h3>Schedule: ' + step.origen + ' -> ' + step.destino + '</h3>';
@@ -147,6 +159,78 @@
                 console.error(err);
             }
         }
+
+        // Saved Queries Logic
+        function getSavedQueries() {
+            const stored = localStorage.getItem('metroQueries');
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveQuery(origin, destination) {
+            const queries = getSavedQueries();
+            // Check for duplicates (case-insensitive just in case, though API should be consistent)
+            const exists = queries.some(q => q.origin === origin && q.destination === destination);
+            if (!exists) {
+                queries.push({ origin, destination });
+                localStorage.setItem('metroQueries', JSON.stringify(queries));
+                renderSavedQueries();
+            }
+        }
+
+        function deleteQuery(index) {
+            const queries = getSavedQueries();
+            queries.splice(index, 1);
+            localStorage.setItem('metroQueries', JSON.stringify(queries));
+            renderSavedQueries();
+        }
+
+        function runSavedQuery(origin, destination) {
+            document.getElementById('origin').value = origin;
+            document.getElementById('destination').value = destination;
+            getSchedule();
+        }
+
+        function renderSavedQueries() {
+            const queries = getSavedQueries();
+            const container = document.getElementById('saved-queries');
+            
+            if (queries.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            container.innerHTML = '<strong>Saved Queries: </strong><br/>';
+            
+            queries.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'saved-query-item';
+                
+                const link = document.createElement('span');
+                link.className = 'saved-query-link';
+                link.textContent = `${q.origin} → ${q.destination}`;
+                link.onclick = () => runSavedQuery(q.origin, q.destination);
+                
+                const del = document.createElement('span');
+                del.className = 'delete-btn';
+                del.innerHTML = '&times;';
+                del.onclick = () => deleteQuery(index);
+                
+                item.appendChild(link);
+                item.appendChild(del);
+                container.appendChild(item);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+             renderSavedQueries();
+             const queries = getSavedQueries();
+             if (queries.length > 0) {
+                 // Execute the first one
+                 runSavedQuery(queries[0].origin, queries[0].destination);
+             }
+        });
     </script>
 </body>
 </html>
