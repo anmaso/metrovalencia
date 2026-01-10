@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrovalencia Schedule</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        input { padding: 8px; flex: 1; min-width: 200px; }
+        button { padding: 8px 16px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .suggestions { 
+            position: absolute; 
+            border: 1px solid #ccc; 
+            background: white; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            z-index: 1000;
+            display: none;
+        }
+        .suggestions div { padding: 8px; cursor: pointer; }
+        .suggestions div:hover { background-color: #eee; }
+        .input-group { position: relative; flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>Metrovalencia Schedule</h1>
+    
+    <div class="controls">
+        <div class="input-group">
+            <input type="text" id="origin" placeholder="Origin Station" autocomplete="off">
+            <div id="origin-suggestions" class="suggestions"></div>
+        </div>
+        <div class="input-group">
+            <input type="text" id="destination" placeholder="Destination Station" autocomplete="off">
+            <div id="dest-suggestions" class="suggestions"></div>
+        </div>
+        <button onclick="getSchedule()">Get Schedule</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Autocomplete Logic
+        async function fetchStations(query) {
+            const res = await fetch(`/api/stations?q=${encodeURIComponent(query)}`);
+            return await res.json();
+        }
+
+        function setupAutocomplete(inputId, suggestionId) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(suggestionId);
+
+            input.addEventListener('input', async () => {
+                const query = input.value;
+                if (query.length < 2) {
+                    list.style.display = 'none';
+                    return;
+                }
+                const stations = await fetchStations(query);
+                list.innerHTML = '';
+                if (stations.length > 0) {
+                    list.style.display = 'block';
+                    stations.forEach(s => {
+                        const div = document.createElement('div');
+                        div.textContent = s.name;
+                        div.onclick = () => {
+                            input.value = s.name;
+                            list.style.display = 'none';
+                        };
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.style.display = 'none';
+                }
+            });
+
+            // Hide when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target !== input) {
+                    list.style.display = 'none';
+                }
+            });
+        }
+
+        setupAutocomplete('origin', 'origin-suggestions');
+        setupAutocomplete('destination', 'dest-suggestions');
+
+        // Schedule Logic
+        async function getSchedule() {
+            const origin = document.getElementById('origin').value;
+            const dest = document.getElementById('destination').value;
+            const resultsDiv = document.getElementById('results');
+
+            resultsDiv.innerHTML = 'Loading...';
+
+            try {
+                const res = await fetch(`/api/schedule?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p style="color:red">Error: ${data.error}</p>`;
+                    return;
+                }
+
+                console.log('API Response:', data);
+
+                if (data.result && data.result.length > 0 && data.result[0].pasos && data.result[0].pasos.length > 0) {
+                    const step = data.result[0].pasos[0];
+                    const schedules = step.horarios;
+                    
+                    let tableHtml = '<h3>Schedule: ' + step.origen + ' -> ' + step.destino + '</h3>';
+                    tableHtml += '<table><thead><tr><th>Hour</th><th>Minutes</th></tr></thead><tbody>';
+
+                    // Sort hours numerically
+                    const hours = Object.keys(schedules).sort((a, b) => parseInt(a) - parseInt(b));
+
+                    for (const hour of hours) {
+                        const mins = schedules[hour];
+                        if (Array.isArray(mins) && mins.length > 0) {
+                             // mins are like ["10:00", "10:07"] or sometimes just minutes?
+                             // Looking at the JSON: "10":["10:00","10:07"...]
+                             // So it contains full time strings.
+                             // We can just join them or format nicely.
+                             // Let's just show the minutes part if we want "Hour | Minutes" columns, 
+                             // but the array has "HH:MM".
+                             // Let's display "HH" in first col, and "MM, MM, MM" in second.
+                             
+                             const minutesList = mins.map(t => t.split(':')[1]).join(', ');
+                             tableHtml += `<tr><td>${hour}:00</td><td>${minutesList}</td></tr>`;
+                        }
+                    }
+                    tableHtml += '</tbody></table>';
+                    resultsDiv.innerHTML = tableHtml;
+                } else if (data.html) {
+                    // Fallback to raw HTML if structure matches partial expectations
+                     resultsDiv.innerHTML = data.html;
+                } else {
+                     resultsDiv.innerHTML = '<p>No schedule found.</p>';
+                }
+
+            } catch (err) {
+                resultsDiv.innerHTML = `<p style="color:red">Failed to fetch schedule.</p>`;
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
