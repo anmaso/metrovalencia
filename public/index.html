@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metrovalencia Schedule</title>
+    <title>Metro Valencia</title>
+    <link rel="icon" type="image/png" href="https://www.metrovalencia.es/wp-content/uploads/2020/09/logo-metro.png">
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
         .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         input { padding: 8px; flex: 1; min-width: 200px; }
         button { padding: 8px 16px; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table { font-size: 1.2em; width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         .suggestions { 
@@ -24,8 +25,8 @@
         .suggestions div { padding: 8px; cursor: pointer; }
         .suggestions div:hover { background-color: #eee; }
         .input-group { position: relative; flex: 1; }
-        .saved-queries { margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #eee; display: none; }
-        .saved-query-item { display: inline-flex; align-items: center; margin-right: 15px; margin-bottom: 5px; background: #fff; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .xsaved-queries { margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #eee; display: none; }
+        .saved-query-item { display: block; align-items: center; margin-right: 15px; margin-bottom: 5px; background: #fff; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; }
         .saved-query-link { cursor: pointer; color: #0066cc; text-decoration: none; margin-right: 8px; }
         .saved-query-link:hover { text-decoration: underline; }
         .delete-btn { cursor: pointer; color: #cc0000; font-weight: bold; font-size: 1.2em; line-height: 1; }
@@ -33,7 +34,7 @@
     </style>
 </head>
 <body>
-    <h1>Metrovalencia Schedule</h1>
+    <h1>Metro Valencia</h1>
     
     <div id="saved-queries" class="saved-queries"></div>
 
@@ -46,7 +47,7 @@
             <input type="text" id="destination" placeholder="Destination Station" autocomplete="off">
             <div id="dest-suggestions" class="suggestions"></div>
         </div>
-        <button onclick="getSchedule()">Get Schedule</button>
+        <button onclick="getSchedule()">Buscar</button>
     </div>
 
     <div id="results"></div>
@@ -124,7 +125,7 @@
 
                     const schedules = step.horarios;
                     
-                    let tableHtml = '<h3>Schedule: ' + step.origen + ' -> ' + step.destino + '</h3>';
+                    let tableHtml = '<h3>Horario: ' + step.origen + ' → ' + step.destino + '</h3>';
                     tableHtml += '<table><thead><tr><th>Hour</th><th>Minutes</th></tr></thead><tbody>';
 
                     // Sort hours numerically
@@ -200,7 +201,7 @@
             }
 
             container.style.display = 'block';
-            container.innerHTML = '<strong>Saved Queries: </strong><br/>';
+            container.innerHTML = '';
             
             queries.forEach((q, index) => {
                 const item = document.createElement('div');
