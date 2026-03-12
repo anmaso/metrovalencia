@@ -125,7 +125,7 @@
 
                     const schedules = step.horarios;
                     
-                    let tableHtml = '<h3>Horario: ' + step.origen + ' → ' + step.destino + '</h3>';
+                    let tableHtml = '<div style="display:flex;align-items:center;gap:12px"><h3 style="margin:0">Horario: ' + step.origen + ' → ' + step.destino + '</h3><button onclick="swapAndSearch()">⇄ ' + step.destino + ' → ' + step.origen + '</button></div>';
                     tableHtml += '<table><thead><tr><th>Hour</th><th>Minutes</th></tr></thead><tbody>';
 
                     // Sort hours numerically
@@ -159,6 +159,15 @@
                 resultsDiv.innerHTML = `<p style="color:red">Failed to fetch schedule.</p>`;
                 console.error(err);
             }
+        }
+
+        function swapAndSearch() {
+            const originInput = document.getElementById('origin');
+            const destInput = document.getElementById('destination');
+            const tmp = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = tmp;
+            getSchedule();
         }
 
         // Saved Queries Logic
