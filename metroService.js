@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const qs = require('qs');
 
-const BASE_URL = 'https://www.metrovalencia.es/ca/consulta-horaris-i-planificador/';
+const BASE_URL = 'https://www.metrovalencia.es/consulta-horaris-i-planificador/';
 const API_URL = 'https://www.metrovalencia.es/wp-content/themes/metrovalencia/functions/ajax-no-wp.php';
 
 let stations = [];
