@@ -1,6 +1,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const qs = require('qs');
+const https = require('https');
+
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const BASE_URL = 'https://www.metrovalencia.es/consulta-horaris-i-planificador/';
 const API_URL = 'https://www.metrovalencia.es/wp-content/themes/metrovalencia/functions/ajax-no-wp.php';
@@ -11,7 +14,7 @@ let authToken = '';
 async function initialize() {
     try {
         console.log('Initializing Metrovalencia service...');
-        const response = await axios.get(BASE_URL);
+        const response = await axios.get(BASE_URL, { httpsAgent });
         const $ = cheerio.load(response.data);
 
         // Extract Stations
@@ -134,6 +137,7 @@ async function getSchedule(originStr, destinationStr) {
 
     try {
         const response = await axios.post(API_URL, body, {
+            httpsAgent,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
